@@ -2,7 +2,7 @@ extern crate regex;
 
 use regex::Regex;
 
-pub fn derive_repo_url<S>(addr: S) -> Result<String, String>
+pub fn derive_repo_url<S>(addr: S) -> String
     where S: AsRef<str>
 {
     lazy_static! {
@@ -16,10 +16,10 @@ pub fn derive_repo_url<S>(addr: S) -> Result<String, String>
     }
 
     let cap = RE.captures(addr.as_ref()).expect(&format!("invalid git url: {}", addr.as_ref()));
-    match (cap.name("host"), cap.name("project")) {
-        (Some(h), Some(p)) => Ok(format!("https://{}/{}", h.as_str(), p.as_str())),
-        _ => Err(format!("invalid git url: {}", addr.as_ref()))
+    if let (Some(h), Some(p)) = (cap.name("host"), cap.name("project")) {
+        return format!("https://{}/{}", h.as_str(), p.as_str())
     }
+    panic!("invalid git address {}", addr.as_ref());
 }
 
 
@@ -31,7 +31,7 @@ mod test {
     fn http_addr() {
         let input = "https://github.skyscannertools.net/Albatross/voyager.git";
         let expect = "https://github.skyscannertools.net/Albatross/voyager";
-        let output = derive_repo_url(input).unwrap();
+        let output = derive_repo_url(input);
         assert_eq!(expect, output);
     }
 
@@ -39,7 +39,7 @@ mod test {
     fn ssh_addr() {
         let input = "git@github.skyscannertools.net:Albatross/voyager.git";
         let expect = "https://github.skyscannertools.net/Albatross/voyager";
-        let output = derive_repo_url(input).unwrap();
+        let output = derive_repo_url(input);
         assert_eq!(expect, output);
     }
 
@@ -47,7 +47,7 @@ mod test {
     fn http_url() {
         let input = "https://github.skyscannertools.net/Albatross/voyager";
         let expect = "https://github.skyscannertools.net/Albatross/voyager";
-        let output = derive_repo_url(input).unwrap();
+        let output = derive_repo_url(input);
         assert_eq!(expect, output);
     }
 }

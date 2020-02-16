@@ -1,10 +1,7 @@
-extern crate rustyline;
-
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::fmt;
-
-use rustyline::Editor;
+use std::io::{stdin, stdout, Write};
 
 pub struct PromptForChoice<S: AsRef<str>>(Vec<S>);
 
@@ -20,14 +17,16 @@ impl Display for PromptInputError {
 }
 
 pub fn prompt_value<S, T, V>(msg: S, parse: T) -> V
-    where S: AsRef<str>,
+    where S: AsRef<str> + Display,
           T: Fn(String) -> Result<V, PromptInputError>
 {
-    let mut rl = Editor::<()>::new();
     loop {
-        let readline = rl.readline(msg.as_ref());
-        let line = readline.unwrap();
-        match parse(line) {
+        print!("{}: ", msg);
+        stdout().flush().unwrap();
+        let mut line = String::new();
+        stdin().read_line(&mut line).unwrap();
+
+        match parse(line.trim_end().to_string()) {
             Ok(received) => return received,
             Err(e) => println!("{}", e)
         }
@@ -55,7 +54,7 @@ impl<S: AsRef<str>> PromptForChoice<S> {
         }
 
         let chosen =
-            prompt_value(format!("Type choice (0 - {}): ", self.0.len() - 1), |s| {
+            prompt_value(format!("Type choice (0 - {})", self.0.len() - 1), |s| {
                 s.parse::<usize>()
                     .map_err(|_| PromptInputError(String::from(&s)))
                     .and_then(|v| {

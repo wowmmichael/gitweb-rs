@@ -22,7 +22,6 @@ pub fn derive_repo_url<S>(addr: S) -> String
     panic!("invalid git address {}", addr.as_ref());
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
